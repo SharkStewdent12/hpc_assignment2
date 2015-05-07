@@ -1,0 +1,45 @@
+///////////////////////////////////////////////////////////////////////////////
+// Declarations
+///////////////////////////////////////////////////////////////////////////////
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <cuda_runtime.h>
+
+// Parameters
+#define ImgSize 256
+#define BorderOffset 1
+#define BlockSize 16
+
+// Functions (pre-declarations)
+void applyConvolution_serial(int* sourceImg, int* kernel, int* resultImg);
+__global__ void applyConvolution_parallel(int* sourceImg, int* kernel, int* resultImg);
+bool equalsImage(int* image1, int* image2);
+void displayImage(int* image);
+void populateRandomImg(int* img);
+
+///////////////////////////////////////////////////////////////////////////////
+// Program main
+///////////////////////////////////////////////////////////////////////////////
+int main( int argc, char** argv) {
+	//initialise
+
+	//Generate image
+
+	//choose kernel
+
+	//time serial
+
+	//time parallel
+
+	//validate output
+
+	//display results
+
+	return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Functions
+///////////////////////////////////////////////////////////////////////////////
