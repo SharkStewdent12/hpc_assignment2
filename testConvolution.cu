@@ -43,6 +43,8 @@ int main( int argc, char** argv) {
 	////////////////////
 	// Initialisation
 	size_t imgSize = (ImgDim+1) * (ImgDim+1) * sizeof(int); //+1 to add border
+	clock_t startTime;
+	double serialTime, parallelTime;
 	srand (time(NULL));
 	int* sourceImg = (int*)malloc(imgSize);
 	int* serialImg = (int*)malloc(imgSize);
@@ -67,7 +69,7 @@ int main( int argc, char** argv) {
 			return 1;			
 	}//end switch
 
-	displayMatrix(kernel,3,3);
+	displayMatrix(kernel,3,3);//test code
 	////////////////////
 	//Generate image
 	
@@ -85,22 +87,61 @@ int main( int argc, char** argv) {
 		}//end for col
 	}//end for row
 
-	displayMatrix(sourceImg, ImgDim + 2, ImgDim + 2);
-
-	////////////////////
-	//choose kernel
+	displayMatrix(sourceImg, ImgDim + 2, ImgDim + 2);//test code
 
 	////////////////////
 	//time serial
 
+	startTime = clock(); //start timer
+	int sum;
+	for (int repeat = 0; repeat < NumRepeats; repeat++) {
+		printf("serial repeat %i\n",repeat);
+
+		for (int row = 1; row < ImgDim+1; row++) { //borders excluded
+			for (int col = 1; col < ImgDim+1; col++) { //borders excluded
+				
+				sum = 0;
+
+				//Convolution
+				for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
+					for (int colOffset = -1; colOffset <= 1; colOffset++) {
+						
+						sum = sum + (sourceImg[(row+rowOffset)*(ImgDim+2) + col + colOffset] * kernel[(rowOffset+1)*3 + (colOffset+1)] );
+
+					}//end for colOffset
+				}//end for rowOffset
+
+				if (sum < 0) {
+					sum = 0;
+				}//end if
+				//serialImg[row*(ImgDim+2)+col] = sum;
+				serialImg[row*(ImgDim+2)+col] = 5;
+
+
+			}//end for col
+		}//end for row
+		
+	}//end for repeat
+
+	displayMatrix(serialImg, ImgDim+2,ImgDim+2);
+
+	serialTime = (double)(clock() - startTime) / CLOCKS_PER_SEC;
+
 	////////////////////
 	//time parallel
+	startTime = clock(); //start timer
+	for (int repeat = 0; repeat < NumRepeats; repeat++) {
+		printf("parallel repeat %i\n",repeat);
+	}//end for repeat
+	parallelTime = (double)(clock() - startTime) / CLOCKS_PER_SEC;
 
 	////////////////////
 	//validate output
 
 	////////////////////
 	//display results
+	printf("serial time: %f\n",serialTime);
+	printf("parallel time: %f\n",parallelTime);
 
 	return 0; // That means it worked fine.
 }
