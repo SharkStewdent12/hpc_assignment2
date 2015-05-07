@@ -8,9 +8,7 @@
 #include <cuda_runtime.h>
 
 // Parameters
-#define ImgWidth 256
-#define ImgHeight 256
-#define BorderOffset 1
+#define ImgDim 5
 #define BlockSize 16
 #define NumRepeats 10
 
@@ -44,7 +42,7 @@ int main( int argc, char** argv) {
 
 	////////////////////
 	// Initialisation
-	size_t imgSize = (ImgWidth+BorderOffset) * (ImgHeight+BorderOffset) * sizeof(int);
+	size_t imgSize = (ImgDim+1) * (ImgDim+1) * sizeof(int); //+1 to add border
 	srand (time(NULL));
 	int* sourceImg = (int*)malloc(imgSize);
 	int* serialImg = (int*)malloc(imgSize);
@@ -72,7 +70,22 @@ int main( int argc, char** argv) {
 	displayMatrix(kernel,3,3);
 	////////////////////
 	//Generate image
+	
+	//Create border of zeros stars at a corner and works clockwise
+	for (int pos = 0; pos < ImgDim+1; pos++) {
+		sourceImg[pos] = 0; //top row, left to right
+		sourceImg[(pos+1)*(ImgDim+2)-1] = 0; //right side, top to bottom
+		sourceImg[(ImgDim+2)*(ImgDim+2)-pos-1] = 0; //bottom row, right to left
+		sourceImg[(ImgDim+2-pos)*(ImgDim+2)] = 0; //left side, bottom to top
+	}//end for pos
 
+	for (int row = 1; row < ImgDim+1; row++) { //borders excluded
+		for (int col = 1; col < ImgDim+1; col++) { //borders excluded
+			sourceImg[row*(ImgDim+2) + col] = rand() % 266;
+		}//end for col
+	}//end for row
+
+	displayMatrix(sourceImg, ImgDim + 2, ImgDim + 2);
 
 	////////////////////
 	//choose kernel
@@ -89,7 +102,7 @@ int main( int argc, char** argv) {
 	////////////////////
 	//display results
 
-	return 0;
+	return 0; // That means it worked fine.
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -102,7 +115,7 @@ for (int row = 0; row < matrixWidth; row++) {
 
 	for (int col = 0; col < matrixHeight; col++) {
 
-		printf("%d ",matrix[row*matrixWidth+col]);
+		printf("%i ",matrix[row*matrixWidth+col]);
 
 	}//end for col
 	
