@@ -42,11 +42,12 @@ int main( int argc, char** argv) {
 
 	////////////////////
 	// Initialisation
-	size_t imgSize = (ImgDim+1) * (ImgDim+1) * sizeof(int); //+1 to add border
+	size_t imgSize = (ImgDim) * (ImgDim) * sizeof(int); //+2 to add border
+	size_t imgSize_bordered = (ImgDim+2) * (ImgDim+2) * sizeof(int); //+2 to add border
 	clock_t startTime;
 	double serialTime, parallelTime;
 	srand (time(NULL));
-	int* sourceImg = (int*)malloc(imgSize);
+	int* sourceImg = (int*)malloc(imgSize_bordered);
 	int* serialImg = (int*)malloc(imgSize);
 	int* parallelImg = (int*)malloc(imgSize);
 	int* kernel;// = (int*)malloc(9*sizeof(int));
@@ -79,6 +80,17 @@ int main( int argc, char** argv) {
 		sourceImg[(pos+1)*(ImgDim+2)-1] = 0; //right side, top to bottom
 		sourceImg[(ImgDim+2)*(ImgDim+2)-pos-1] = 0; //bottom row, right to left
 		sourceImg[(ImgDim+2-pos)*(ImgDim+2)] = 0; //left side, bottom to top
+
+		serialImg[pos] = 0; //top row, left to right
+		serialImg[(pos+1)*(ImgDim+2)-1] = 0; //right side, top to bottom
+		serialImg[(ImgDim+2)*(ImgDim+2)-pos-1] = 0; //bottom row, right to left
+		serialImg[(ImgDim+2-pos)*(ImgDim+2)] = 0; //left side, bottom to top
+
+		parallelImg[pos] = 0; //top row, left to right
+		parallelImg[(pos+1)*(ImgDim+2)-1] = 0; //right side, top to bottom
+		parallelImg[(ImgDim+2)*(ImgDim+2)-pos-1] = 0; //bottom row, right to left
+		parallelImg[(ImgDim+2-pos)*(ImgDim+2)] = 0; //left side, bottom to top
+
 	}//end for pos
 
 	for (int row = 1; row < ImgDim+1; row++) { //borders excluded
@@ -114,8 +126,8 @@ int main( int argc, char** argv) {
 				if (sum < 0) {
 					sum = 0;
 				}//end if
-				//serialImg[row*(ImgDim+2)+col] = sum;
-				serialImg[row*(ImgDim+2)+col] = 5;
+				serialImg[row*(ImgDim+2)+col] = sum;
+				//serialImg[row*(ImgDim+2)+col] = 5;
 
 
 			}//end for col
