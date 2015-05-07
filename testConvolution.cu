@@ -18,7 +18,7 @@ __global__ void applyConvolution_parallel(int* sourceImg, int* kernel, int* resu
 bool equalsImage(int* image1, int* image2);
 void displayMatrix(int* matrix, int matrixWidth, int matrixHeight);
 void populateRandomImg(int* img);
-void createBorder(int* image, int imageDim);
+void createBorder(int* image);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Main funcion
@@ -32,13 +32,6 @@ int main( int argc, char** argv) {
 	}
 	int kernelNum = strtol( argv[1], (char**)NULL,10 );
 
-	/*
-	if ((kernelNum < 1) || (kernelNum > 3)){
-		printf("Wrong arguments, please place a single number from 1 to 3 to choose a kernel to apply as an argument.\n");
-		return 1;
-	}
-	*/
-
 	printf("Kernel chosen: %d\n",kernelNum);
 
 	////////////////////
@@ -51,7 +44,7 @@ int main( int argc, char** argv) {
 	int* sourceImg = (int*)malloc(imgSize_bordered);
 	int* serialImg = (int*)malloc(imgSize);
 	int* parallelImg = (int*)malloc(imgSize);
-	int* kernel;// = (int*)malloc(9*sizeof(int));
+	int* kernel;
 	int kernel1[9] = {-1,-1,-1,-1,9,-1,-1,-1,-1};
 	int kernel2[9] = {-1,0,1,-2,0,2,-1,0,1};
 	int kernel3[9] = {2,0,0,0,-1,0,0,0,-1};
@@ -76,9 +69,9 @@ int main( int argc, char** argv) {
 	//Generate image
 	
 	//Create border of zeros stars at a corner and works clockwise
-	createBorder(sourceImg, ImgDim);
-	createBorder(serialImg, ImgDim);
-	createBorder(parallelImg, ImgDim);
+	createBorder(sourceImg);
+	createBorder(serialImg);
+	createBorder(parallelImg);
 
 	for (int row = 1; row < ImgDim+1; row++) { //borders excluded
 		for (int col = 1; col < ImgDim+1; col++) { //borders excluded
@@ -92,34 +85,9 @@ int main( int argc, char** argv) {
 	//time serial
 
 	startTime = clock(); //start timer
-	int sum;
 	for (int repeat = 0; repeat < NumRepeats; repeat++) {
 		//printf("serial repeat %i\n",repeat);
-
-		for (int row = 1; row < ImgDim+1; row++) { //borders excluded
-			for (int col = 1; col < ImgDim+1; col++) { //borders excluded
-				
-				sum = 0;
-
-				//Convolution
-				for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
-					for (int colOffset = -1; colOffset <= 1; colOffset++) {
-						
-						sum = sum + (sourceImg[(row+rowOffset)*(ImgDim+2) + col + colOffset] * kernel[(rowOffset+1)*3 + (colOffset+1)] );
-
-					}//end for colOffset
-				}//end for rowOffset
-
-				if (sum < 0) {
-					sum = 0;
-				}//end if
-				serialImg[row*(ImgDim+2)+col] = sum;
-				//serialImg[row*(ImgDim+2)+col] = 5;
-
-
-			}//end for col
-		}//end for row
-		
+		applyConvolution_serial(sourceImg, kernel, serialImg);
 	}//end for repeat
 
 	displayMatrix(serialImg, ImgDim+2,ImgDim+2);
@@ -168,13 +136,13 @@ void displayMatrix(int* matrix, int matrixWidth, int matrixHeight) {
 
 
 
-void createBorder(int* image, int imageDim) {
+void createBorder(int* image) {
 
-	for (int pos = 0; pos < imageDim+1; pos++) {
+	for (int pos = 0; pos < ImgDim+1; pos++) {
 		image[pos] = 0; //top row, left to right
-		image[(pos+1)*(imageDim+2)-1] = 0; //right side, top to bottom
-		image[(imageDim+2)*(imageDim+2)-pos-1] = 0; //bottom row, right to left
-		image[(imageDim+2-pos)*(imageDim+2)] = 0; //left side, bottom to top
+		image[(pos+1)*(ImgDim+2)-1] = 0; //right side, top to bottom
+		image[(ImgDim+2)*(ImgDim+2)-pos-1] = 0; //bottom row, right to left
+		image[(ImgDim+2-pos)*(ImgDim+2)] = 0; //left side, bottom to top
 
 
 	}//end for pos
@@ -183,6 +151,35 @@ void createBorder(int* image, int imageDim) {
 
 
 
+void applyConvolution_serial(int* sourceImg, int* kernel, int* resultImg) {
+
+	int sum;
+
+	for (int row = 1; row < ImgDim+1; row++) { //borders excluded
+		for (int col = 1; col < ImgDim+1; col++) { //borders excluded
+			
+			sum = 0;
+
+			//Convolution
+			for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
+				for (int colOffset = -1; colOffset <= 1; colOffset++) {
+					
+					sum = sum + (sourceImg[(row+rowOffset)*(ImgDim+2) + col + colOffset] * kernel[(rowOffset+1)*3 + (colOffset+1)] );
+
+				}//end for colOffset
+			}//end for rowOffset
+
+			if (sum < 0) {
+				sum = 0;
+			}//end if
+			resultImg[row*(ImgDim+2)+col] = sum;
+			//resultImg[row*(ImgDim+2)+col] = 5;
+
+
+		}//end for col
+	}//end for row
+
+}//end funcion applyConvolution_serial
 
 
 
