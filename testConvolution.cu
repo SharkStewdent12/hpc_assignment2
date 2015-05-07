@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Declarations
 ///////////////////////////////////////////////////////////////////////////////
-
+// Libraries
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -11,6 +11,7 @@
 #define ImgSize 256
 #define BorderOffset 1
 #define BlockSize 16
+#define NumRepeats 10
 
 // Functions (pre-declarations)
 void applyConvolution_serial(int* sourceImg, int* kernel, int* resultImg);
@@ -20,10 +21,21 @@ void displayImage(int* image);
 void populateRandomImg(int* img);
 
 ///////////////////////////////////////////////////////////////////////////////
-// Program main
+// Main funcion
 ///////////////////////////////////////////////////////////////////////////////
 int main( int argc, char** argv) {
 	//initialise
+	if (argc != 2){
+		printf("Wrong arguments, please place a single number from 1 to 3 to choose a kernel to apply as an argument.\n");
+		return 1;
+	}
+	int kernelNum = strtol( argv[1], (char**)NULL,10 );
+	if ((kernelNum < 1) || (kernelNum > 3)){
+		printf("Wrong arguments, please place a single number from 1 to 3 to choose a kernel to apply as an argument.\n");
+		return 1;
+	}
+
+	printf("%d\n",kernelNum);
 
 	//Generate image
 
