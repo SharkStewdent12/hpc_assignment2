@@ -107,7 +107,7 @@ int main( int argc, char** argv) {
 	startTime = clock(); //start timer
 	int sum;
 	for (int repeat = 0; repeat < NumRepeats; repeat++) {
-		printf("serial repeat %i\n",repeat);
+		//printf("serial repeat %i\n",repeat);
 
 		for (int row = 1; row < ImgDim+1; row++) { //borders excluded
 			for (int col = 1; col < ImgDim+1; col++) { //borders excluded
@@ -143,7 +143,7 @@ int main( int argc, char** argv) {
 	//time parallel
 	startTime = clock(); //start timer
 	for (int repeat = 0; repeat < NumRepeats; repeat++) {
-		printf("parallel repeat %i\n",repeat);
+		//printf("parallel repeat %i\n",repeat);
 	}//end for repeat
 	parallelTime = (double)(clock() - startTime) / CLOCKS_PER_SEC;
 
@@ -152,8 +152,8 @@ int main( int argc, char** argv) {
 
 	////////////////////
 	//display results
-	printf("serial time: %f\n",serialTime);
-	printf("parallel time: %f\n",parallelTime);
+	printf("%ix serial time: %f\n",NumRepeats,serialTime);
+	printf("%ix parallel time: %f\n",NumRepeats,parallelTime);
 
 	return 0; // That means it worked fine.
 }
