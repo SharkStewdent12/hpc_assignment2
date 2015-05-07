@@ -18,7 +18,7 @@
 void applyConvolution_serial(int* sourceImg, int* kernel, int* resultImg);
 __global__ void applyConvolution_parallel(int* sourceImg, int* kernel, int* resultImg);
 bool equalsImage(int* image1, int* image2);
-void displayImage(int* image);
+void displayMatrix(int* matrix, int matrixWidth, int matrixHeight);
 void populateRandomImg(int* img);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -69,7 +69,7 @@ int main( int argc, char** argv) {
 			return 1;			
 	}//end switch
 
-
+	displayMatrix(kernel,3,3);
 	////////////////////
 	//Generate image
 
@@ -95,3 +95,42 @@ int main( int argc, char** argv) {
 ///////////////////////////////////////////////////////////////////////////////
 // Functions
 ///////////////////////////////////////////////////////////////////////////////
+
+void displayMatrix(int* matrix, int matrixWidth, int matrixHeight) {
+
+for (int row = 0; row < matrixWidth; row++) {
+
+	for (int col = 0; col < matrixHeight; col++) {
+
+		printf("%d ",matrix[row*matrixWidth+col]);
+
+	}//end for col
+	
+	printf("\n");
+
+}//end for row
+
+
+}//end funcion displayMatrix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
