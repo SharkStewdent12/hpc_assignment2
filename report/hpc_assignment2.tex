@@ -1,0 +1,143 @@
+\documentclass[11pt]{article}
+\usepackage[pdftex]{graphicx}
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage[margin=2cm]{geometry}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage{float}
+\usepackage{listings} 
+
+\begin{document}     
+
+
+
+\begin{titlepage}
+    \centering
+    \vfill
+    {\bfseries\Large
+        COMS Honours \\
+	High Performance Computing:\\
+	 Assignment 2\\        
+        Hairong Wang\\
+	University of the Witwatersrand\\
+           Due:  8 May 2015
+        \vskip1cm
+	Mark Durrheim - 570169\\     
+    }    
+    \vskip3cm
+    \includegraphics[width=10cm]{wits.jpg} 
+
+\end{titlepage}
+\newpage
+
+\tableofcontents
+\newpage
+
+\section{Problems}
+
+\subsection{$p$ node hypercube}
+
+\begin{figure}
+%\includegraphics{hypercubes.png}
+\caption{Hypercubes: a) 1-D b) 2-D c) 3-D d) 4-D \newline Source: \protect\url{http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/GASTERATOS/image068.gif}}
+\end{figure}
+
+A hypercube of dimension $d+1$ is formed by taking two hypercubes of dimension d and joining each node to its twin in the other hypercube. This process can be seen in the diagram. Note that a hypercube of dimension 0 is simply a single node.
+
+When we increase the dimension by one we will double the number of nodes in the hypercube. Since the first hypercube has a single node we will get the equation $p = 2^d$.
+
+The diameter of a 1 node hypercube is zero. When we move to the next dimension of hypercube it may be thought as adding another, identical, hypercube and connecting matching nodes. The diameter is the length of the longest shortest path between any points in the hypercube. When we add the new hypercube each new node is connected to a different node of the original. This means that to reach one of the newly added nodes it cannot take more than one more step than it did to reach any of the nodes of the original hypercube. Thus, the diameter increases by one. So diameter is $d = \log_2 p$.
+
+Since a hypercube is formed from joining two identical hypercubes from one dimension lower the simplest manner to disconnect into two equal networks is by removing the joining connections. One connection was added for each matching pair of nodes in the lower dimension hypercubes, so that is $p/2$.
+
+We will measure cost in terms of connections. A one node hypercube has cost zero. The cost of the next dimension of hypercube is twice the cost of the current, plus the number of nodes of the current.
+
+\subsection{3-D Mesh}
+
+\begin{figure}
+\caption{3D mesh with wraparound \newline Source: \protect\url{http://pages.cs.wisc.edu/~tvrdik/5/html/gif/torus334.gif}}
+\end{figure}
+
+Considering the configuration acts like a fixed grid, distance between nodes is given by Manhattan distance. This means that the distance is calculated by the sum of the distances along each dimension. Any path where each move is made towards the destination will always give the same total distance. This allows us to consider the distance through each dimension separately.
+
+When travelling along a single dimension the points can be thought of as a 1-D array. Since this topology has wraparound these arrays are rings.
+
+The longest path to a point along a ring is always to a point on the opposite side. This is given by floor(k/2). Thus, due to the properties of Manhattan distance, and since we have three dimensions, the longest shortest path, the diameter, will be $3\left \lfloor{k/2}\right \rfloor$.
+
+To break our 3-D cube into two equal parts we will need to pick an arbitrary dimension, cut all wires in a plane perpendicular to its axis, halfway through the cube. We will also need to eliminate the wraparound wires parallel to our chosen axis. The number of wires cut for both of these will be equal to the number of nodes in a layer or face of the cube. That is $k^2$ nodes, so we will need to cut twice that many wires. Thus, the bisection width is $2k^2$.
+
+To calculate how many connections there are, let us look at each direction. vertically there are $k^2$ rings, each with $k$ connections. There are three directions, so the cost is $3k^3$.
+
+\subsection{Embedding a Complete Binary Tree into a Hypercube}
+A $d$-dimensional hypercube has $2^d$ nodes, so a complete binary tree of $2^d-1$ nodes should fit well. The tree will have one less edge than nodes, which is less than the tree has available.
+
+\section{Programming Exercise}
+
+\subsection{Parallelizing Method}
+To parallelize the code the work was split into chunks. An equally size portion of the list of data is allocated to each thread. Within each thread the regular linear method of finding the sum, minimum, and maximum is done locally. Once each thread is complete it combines its result with that of the main program.
+
+To avoid race conditions for updating the shared variables the critical construct is used. This means that only one thread can update one the shared variables at a time. The critical sections are named so that different processes may both be in a critical section, so long as it does not bear the same name. This reduces unnecessary waiting.
+
+\newpage
+
+\subsection{Running the Code}
+
+To compile the code, ensure that you have gcc version 4.7 at minimum (4.8.2 was used here). In the terminal, navigate to the folder containing the source code and run the following command.
+
+\begin{lstlisting}
+gcc -fopenmp hpc_stats_v6.c -o hpc_stats_v6
+\end{lstlisting}
+To then run the program use the command:
+\begin{lstlisting}
+./hpc_stats_v6
+\end{lstlisting}
+You can change the number of threads to a chosen amount with the export command, example for 6 threads:
+\begin{lstlisting}
+export OMP_NUM_THREADS=6
+\end{lstlisting}
+
+To get more detailed results as output uncomment the lines 49, 82, and 109.
+The size of the dataset can be changed on line 6.
+
+\subsection{Results}
+These results were run on a personal computer with processor: Intel(R) Core(TM) i7-3820 CPU @ 3.60GHz, 4 cores.
+
+Results in table are the mean of 5 executions of the program (requires uncommenting lines 49 and 109). 10000 doubles are used as data.
+
+\begin{table}[h]
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Number of threads} & \textbf{Serial time (s)} & \textbf{Parallel Time (s)} & \textbf{Speedup} \\ \hline
+2                          & 0.000078                 & 0.000251                   & 0.3104884        \\ \hline
+4                          & 0.0000798                & 0.0039476                  & 0.0751624        \\ \hline
+8                          & 0.0000872                & 0.0093346                  & 0.0097586        \\ \hline
+\end{tabular}
+\end{table}
+
+It can clearly be seen that the parallel code is far slower than the serial code. The parallel version in fact speeds up when there are fewer threads. What this implies is that the computational overhead involved in creating the threads and combining their results is of far greater cost than the parallelism saves. If the operations performed across the list were more computationally intensive and/or the list was far bigger, then the parallel could be faster. (A list of 1,000,000 numbers with two threads in fact give a 1.5x speed up.)
+
+
+
+\section{Acknowledgements}
+\LaTeX \space editor: Gummi 0.6.5
+\\
+Text editors: VIM 7.4.52 and Gedit 3.10.4
+\\
+Spreadsheet editor: LibreOffice Calc 4.2.6.3
+\\
+Computer Specifications: CPU-Z 1.72
+\\
+C Compiler: gcc 4.8.2
+\\
+\LaTeX \space table generator: \url{ http://www.tablesgenerator.com/latex_tables}
+
+\newpage
+
+\section{Appendix 1 - Source Code}
+
+%\lstinputlisting[language=C,breaklines=true,title=\lstname,numbers=left]{hpc_stats_v6.c}
+
+\end{document}
