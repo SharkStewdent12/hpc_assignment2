@@ -18,6 +18,7 @@ __global__ void applyConvolution_parallel(int* sourceImg, int* kernel, int* resu
 bool equalsImage(int* image1, int* image2);
 void displayMatrix(int* matrix, int matrixWidth, int matrixHeight);
 void populateRandomImg(int* img);
+void createBorder(int* image, int imageDim);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Main funcion
@@ -75,23 +76,9 @@ int main( int argc, char** argv) {
 	//Generate image
 	
 	//Create border of zeros stars at a corner and works clockwise
-	for (int pos = 0; pos < ImgDim+1; pos++) {
-		sourceImg[pos] = 0; //top row, left to right
-		sourceImg[(pos+1)*(ImgDim+2)-1] = 0; //right side, top to bottom
-		sourceImg[(ImgDim+2)*(ImgDim+2)-pos-1] = 0; //bottom row, right to left
-		sourceImg[(ImgDim+2-pos)*(ImgDim+2)] = 0; //left side, bottom to top
-
-		serialImg[pos] = 0; //top row, left to right
-		serialImg[(pos+1)*(ImgDim+2)-1] = 0; //right side, top to bottom
-		serialImg[(ImgDim+2)*(ImgDim+2)-pos-1] = 0; //bottom row, right to left
-		serialImg[(ImgDim+2-pos)*(ImgDim+2)] = 0; //left side, bottom to top
-
-		parallelImg[pos] = 0; //top row, left to right
-		parallelImg[(pos+1)*(ImgDim+2)-1] = 0; //right side, top to bottom
-		parallelImg[(ImgDim+2)*(ImgDim+2)-pos-1] = 0; //bottom row, right to left
-		parallelImg[(ImgDim+2-pos)*(ImgDim+2)] = 0; //left side, bottom to top
-
-	}//end for pos
+	createBorder(sourceImg, ImgDim);
+	createBorder(serialImg, ImgDim);
+	createBorder(parallelImg, ImgDim);
 
 	for (int row = 1; row < ImgDim+1; row++) { //borders excluded
 		for (int col = 1; col < ImgDim+1; col++) { //borders excluded
@@ -164,23 +151,35 @@ int main( int argc, char** argv) {
 
 void displayMatrix(int* matrix, int matrixWidth, int matrixHeight) {
 
-for (int row = 0; row < matrixWidth; row++) {
+	for (int row = 0; row < matrixWidth; row++) {
 
-	for (int col = 0; col < matrixHeight; col++) {
+		for (int col = 0; col < matrixHeight; col++) {
 
-		printf("%i ",matrix[row*matrixWidth+col]);
+			printf("%i ",matrix[row*matrixWidth+col]);
 
-	}//end for col
-	
+		}//end for col
+		
+		printf("\n");
+
+	}//end for row
 	printf("\n");
-
-}//end for row
-
 
 }//end funcion displayMatrix
 
 
 
+void createBorder(int* image, int imageDim) {
+
+	for (int pos = 0; pos < imageDim+1; pos++) {
+		image[pos] = 0; //top row, left to right
+		image[(pos+1)*(imageDim+2)-1] = 0; //right side, top to bottom
+		image[(imageDim+2)*(imageDim+2)-pos-1] = 0; //bottom row, right to left
+		image[(imageDim+2-pos)*(imageDim+2)] = 0; //left side, bottom to top
+
+
+	}//end for pos
+
+}//end function createBorder
 
 
 
