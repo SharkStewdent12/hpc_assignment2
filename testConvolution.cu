@@ -86,21 +86,46 @@ int main( int argc, char** argv) {
 
 	startTime = clock(); //start timer
 	for (int repeat = 0; repeat < NumRepeats; repeat++) {
-		//printf("serial repeat %i\n",repeat);
 		applyConvolution_serial(sourceImg, kernel, serialImg);
 	}//end for repeat
 
-	displayMatrix(serialImg, ImgDim+2,ImgDim+2);
-
 	serialTime = (double)(clock() - startTime) / CLOCKS_PER_SEC;
+
+	displayMatrix(serialImg, ImgDim+2,ImgDim+2);
 
 	////////////////////
 	//time parallel
 	startTime = clock(); //start timer
 	for (int repeat = 0; repeat < NumRepeats; repeat++) {
-		//printf("parallel repeat %i\n",repeat);
+
+
+		int* dev_sourceImg;
+		int* dev_parallelImg;
+		int* dev_kernel;
+
+		cudaMalloc((void**)&dev_sourceImg,imgSize_bordered);
+		cudaMalloc((void**)&dev_parallelImg,imgSize);
+		cudaMalloc((void**)&dev_kernel,9*(sizeof(int)));
+
+		cudaMemcpy(dev_sourceImg,sourceImg,imgSize_bordered,cudaMemcpyHostToDevice);
+		cudaMemcpy(dev_parallelImg,parallelImg,imgSize,cudaMemcpyHostToDevice);
+		cudaMemcpy(dev_kernel,kernel,9*sizeof(int),cudaMemcpyHostToDevice);
+
+		dim3 threadsPerBlock(BlockSize,BlockSize);
+		dim3 numBlocks( ImgDim / BlockSize, ImgDim / BlockSize );
+
+		applyConvolution_parallel<<<numBlocks,threadsPerBlock>>>(sourceImg,kernel,parallelImg);
+
+		cudaMemcpy(parallelImg,dev_parallelImg,imgSize,cudaMemcpyDeviceToHost);
+
+		cudaFree(dev_sourceImg);
+		cudaFree(dev_parallelImg);
+		cudaFree(dev_kernel);
+
 	}//end for repeat
+
 	parallelTime = (double)(clock() - startTime) / CLOCKS_PER_SEC;
+	displayMatrix(parallelImg,ImgDim+2,ImgDim+2);
 
 	////////////////////
 	//validate output
@@ -109,6 +134,13 @@ int main( int argc, char** argv) {
 	//display results
 	printf("%ix serial time: %f\n",NumRepeats,serialTime);
 	printf("%ix parallel time: %f\n",NumRepeats,parallelTime);
+
+	////////////////////
+	//cleaning up
+
+	//free(sourceImg);
+	//free(serialImg);
+	//free(parallelImg);
 
 	return 0; // That means it worked fine.
 }
@@ -183,6 +215,45 @@ void applyConvolution_serial(int* sourceImg, int* kernel, int* resultImg) {
 
 
 
+__global__ void applyConvolution_parallel(int* sourceImg, int* kernel, int* resultImg) {
+	__shared__ int source[ImgDim+2][ImgDim+2];
+	__shared__ int result[ImgDim+2][ImgDim+2];
+	int sum;
+	
+	int row = blockIdx.y*blockDim.y + threadIdx.y;
+	int col = blockIdx.x*blockDim.x+threadIdx.x;
+
+	//load image
+	//source[row][col] = sourceImg[row*(ImgDim+2) + col];
+	source[row][col] = 5;
+	
+	__syncthreads();
+	//apply convolution
+	if ( (row > 0) && (row < ImgDim+1) && (col > 0) && (col < ImgDim+1) ) { //check if in bounds and not border
+	
+		sum = 0;
+
+		//Convolution
+		for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
+			for (int colOffset = -1; colOffset <= 1; colOffset++) {
+				
+				//sum = sum + (source[(row+rowOffset)*(ImgDim+2) + col + colOffset] * kernel[(rowOffset+1)*3 + (colOffset+1)] );
+
+			}//end for colOffset
+		}//end for rowOffset
+
+		if (sum < 0) {
+			sum = 0;
+		}//end if
+		result[row][col] = source[row][col]; 
+		
+		__syncthreads();
+		
+		resultImg[row*(ImgDim+2)+col+1] = 5;
+
+	}//end if
+
+}//end funcion applyConvolution_parallel
 
 
 
