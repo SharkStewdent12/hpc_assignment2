@@ -36,12 +36,11 @@ int main( int argc, char** argv) {
 
 	////////////////////
 	// Initialisation
-	size_t imgSize = (ImgDim) * (ImgDim) * sizeof(int); //+2 to add border
-	size_t imgSize_bordered = (ImgDim+2) * (ImgDim+2) * sizeof(int); //+2 to add border
+	size_t imgSize = (ImgDim+2) * (ImgDim+2) * sizeof(int); //+2 to add border
 	clock_t startTime;
 	double serialTime, parallelTime;
-	srand (time(NULL));
-	int* sourceImg = (int*)malloc(imgSize_bordered);
+	//srand (time(NULL));
+	int* sourceImg = (int*)malloc(imgSize);
 	int* serialImg = (int*)malloc(imgSize);
 	int* parallelImg = (int*)malloc(imgSize);
 	int* kernel;
@@ -103,20 +102,23 @@ int main( int argc, char** argv) {
 		int* dev_parallelImg;
 		int* dev_kernel;
 
-		cudaMalloc((void**)&dev_sourceImg,imgSize_bordered);
-		cudaMalloc((void**)&dev_parallelImg,imgSize);
-		cudaMalloc((void**)&dev_kernel,9*(sizeof(int)));
+		cudaMalloc(&dev_sourceImg,imgSize);
+		cudaMalloc(&dev_parallelImg,imgSize);
+		cudaMalloc(&dev_kernel,9*(sizeof(int)));
 
-		cudaMemcpy(dev_sourceImg,sourceImg,imgSize_bordered,cudaMemcpyHostToDevice);
+		sourceImg[8] = 5;
+
+		cudaMemcpy(dev_sourceImg,sourceImg,imgSize,cudaMemcpyHostToDevice);
 		cudaMemcpy(dev_parallelImg,parallelImg,imgSize,cudaMemcpyHostToDevice);
 		cudaMemcpy(dev_kernel,kernel,9*sizeof(int),cudaMemcpyHostToDevice);
 
 		dim3 threadsPerBlock(BlockSize,BlockSize);
 		dim3 numBlocks( ImgDim / BlockSize, ImgDim / BlockSize );
 
-		applyConvolution_parallel<<<numBlocks,threadsPerBlock>>>(sourceImg,kernel,parallelImg);
+		applyConvolution_parallel<<<numBlocks,threadsPerBlock>>>(dev_sourceImg,dev_kernel,dev_parallelImg);
 
-		cudaMemcpy(parallelImg,dev_parallelImg,imgSize,cudaMemcpyDeviceToHost);
+		//cudaMemcpy(parallelImg,dev_parallelImg,imgSize,cudaMemcpyDeviceToHost);
+		cudaMemcpy(sourceImg,dev_sourceImg,imgSize,cudaMemcpyDeviceToHost);
 
 		cudaFree(dev_sourceImg);
 		cudaFree(dev_parallelImg);
@@ -124,8 +126,8 @@ int main( int argc, char** argv) {
 
 	}//end for repeat
 
+	displayMatrix(sourceImg,ImgDim+2,ImgDim+2);
 	parallelTime = (double)(clock() - startTime) / CLOCKS_PER_SEC;
-	displayMatrix(parallelImg,ImgDim+2,ImgDim+2);
 
 	////////////////////
 	//validate output
@@ -222,36 +224,9 @@ __global__ void applyConvolution_parallel(int* sourceImg, int* kernel, int* resu
 	
 	int row = blockIdx.y*blockDim.y + threadIdx.y;
 	int col = blockIdx.x*blockDim.x+threadIdx.x;
+	sourceImg[row*(ImgDim+2) + col ] = 5;
+	sourceImg[9] = 9;
 
-	//load image
-	//source[row][col] = sourceImg[row*(ImgDim+2) + col];
-	source[row][col] = 5;
-	
-	__syncthreads();
-	//apply convolution
-	if ( (row > 0) && (row < ImgDim+1) && (col > 0) && (col < ImgDim+1) ) { //check if in bounds and not border
-	
-		sum = 0;
-
-		//Convolution
-		for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
-			for (int colOffset = -1; colOffset <= 1; colOffset++) {
-				
-				//sum = sum + (source[(row+rowOffset)*(ImgDim+2) + col + colOffset] * kernel[(rowOffset+1)*3 + (colOffset+1)] );
-
-			}//end for colOffset
-		}//end for rowOffset
-
-		if (sum < 0) {
-			sum = 0;
-		}//end if
-		result[row][col] = source[row][col]; 
-		
-		__syncthreads();
-		
-		resultImg[row*(ImgDim+2)+col+1] = 5;
-
-	}//end if
 
 }//end funcion applyConvolution_parallel
 
